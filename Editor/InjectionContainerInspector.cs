@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEditor;
-using UnityEngine;
+using WhiteSparrow.Shared.DependencyInjection.Containers;
 
 namespace WhiteSparrow.Shared.DependencyInjection
 {
@@ -11,7 +10,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 	{
 		public InjectionContainer Container => (InjectionContainer)target;
 
-		private readonly List<Tuple<Type, object>> m_ProcessedMapping = new List<Tuple<Type, object>>();
+		private readonly List<Tuple<object, object>> m_ProcessedMapping = new List<Tuple<object, object>>();
 		
 		private void OnEnable()
 		{
@@ -29,7 +28,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			Container.OnMappingRemoved -= OnContainerMappingChanged;
 		}
 		
-		private void OnContainerMappingChanged(Type type, object instance)
+		private void OnContainerMappingChanged(object o, object instance)
 		{
 			RefreshContainerMappingList();
 		}
@@ -41,13 +40,12 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			var mapping = Container.Mapping;
 			foreach (var mappingPair in mapping)
 			{
-				m_ProcessedMapping.Add(new Tuple<Type, object>(mappingPair.Key, mappingPair.Value));
+				m_ProcessedMapping.Add(new Tuple<object, object>(mappingPair.Key, mappingPair.Value));
 			}
 			
-			m_ProcessedMapping.Sort((lhs, rhs) => EditorUtility.NaturalCompare(lhs.Item1.Name, rhs.Item1.Name));
+			m_ProcessedMapping.Sort((lhs, rhs) => EditorUtility.NaturalCompare(lhs.Item1.ToString(), rhs.Item1.ToString()));
 
 		}
-
 
 		public override void OnInspectorGUI()
 		{
@@ -57,11 +55,11 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			{
 				if (tuple.Item2 is UnityEngine.Object unityObjectValue)
 				{
-					EditorGUILayout.ObjectField(tuple.Item1.Name, unityObjectValue, typeof(UnityEngine.Object));
+					EditorGUILayout.ObjectField(tuple.Item1.ToString(), unityObjectValue, typeof(UnityEngine.Object));
 				}
 				else
 				{
-					EditorGUILayout.LabelField(tuple.Item1.Name, tuple.Item2.GetType().Name);
+					EditorGUILayout.LabelField(tuple.Item1.ToString(), tuple.Item2.GetType().Name);
 				}
 			}
 			

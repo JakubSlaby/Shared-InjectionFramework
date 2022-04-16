@@ -1,25 +1,31 @@
 ﻿using System;
+using WhiteSparrow.Shared.DependencyInjection.Context;
 
 namespace WhiteSparrow.Shared.DependencyInjection
 {
+	
 	public class InjectAttribute : Attribute
 	{
-		public readonly int Context;
+		public readonly ContextIdentifier Context;
 		
-		public InjectAttribute(int context)
+		public InjectAttribute(StructuralContext context)
 		{
-			this.Context = context;
+			Context = context;
 		}
-
+		
 		public InjectAttribute(object context)
 		{
-			if (context is IConvertible convertible)
+			if (context is StructuralContext structuralContext)
 			{
-				this.Context = convertible.ToInt32(null);
+				Context = structuralContext;
+			}
+			else if (context is IConvertible convertible)
+			{
+				Context = convertible.ToInt32(null);
 			}
 			else
 			{
-				throw new ArgumentException($"InjectAttribute property {nameof(context)} has to be convertible to int.");
+				Context = ContextIdentifier.FromObject(context);
 			}
 		}
 	}
