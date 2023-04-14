@@ -1,5 +1,5 @@
 {
-  "name": "com.jakubslaby.packagerepoeditor",
+  "name": "com.jakubslaby.injectionframework",
   "displayName": "Injection Framework",
   "description": "Simple DI framework",
   "author": "Jakub Slaby <jakubslaby@gmail.com>",
