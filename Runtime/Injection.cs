@@ -17,11 +17,10 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			InjectLogic.Inject(instance);
 		}
 
-		public static InjectionContainer Map<T>(ContextIdentifier context, T instance)
+		public static T Map<T>(ContextIdentifier context, T instance)
 		{
 			InjectionContainer container = Containers.Get(context);
-			container.Map<T>(instance);
-			return container;
+			return container.Map<T>(instance);
 		}
 
 		public static T Map<T, TContext>(TContext context) where TContext : struct, IConvertible

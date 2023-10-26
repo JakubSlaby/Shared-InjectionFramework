@@ -5,12 +5,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 {
 	public class ContainersMap
 	{
-		private Dictionary<ContextIdentifier, InjectionContainer> m_ContainersByContext;
-		
-		public ContainersMap()
-		{
-			m_ContainersByContext = new Dictionary<ContextIdentifier, InjectionContainer>();
-		}
+		private Dictionary<ContextIdentifier, InjectionContainer> m_ContainersByContext  = new Dictionary<ContextIdentifier, InjectionContainer>();
 
 		public InjectionContainer Get(ContextIdentifier context)
 		{
@@ -20,6 +15,11 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			container = InjectionContainer.Create(context);
 			m_ContainersByContext[context] = container;
 			return container;
+		}
+
+		public InjectionContainer Get(StructuralContext structuralContext)
+		{
+			return Get((ContextIdentifier)structuralContext);
 		}
 
 	}

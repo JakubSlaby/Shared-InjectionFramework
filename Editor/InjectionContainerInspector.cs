@@ -44,7 +44,6 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			}
 			
 			m_ProcessedMapping.Sort((lhs, rhs) => EditorUtility.NaturalCompare(lhs.Item1.ToString(), rhs.Item1.ToString()));
-
 		}
 
 		public override void OnInspectorGUI()
@@ -53,16 +52,27 @@ namespace WhiteSparrow.Shared.DependencyInjection
 
 			foreach (var tuple in m_ProcessedMapping)
 			{
-				if (tuple.Item2 is UnityEngine.Object unityObjectValue)
+				var label = EditorGUIUtility.TrTempContent(GetLabelString(tuple.Item1));
+				if (tuple.Item2 is MonoBehaviourInstanceBinding mb)
 				{
-					EditorGUILayout.ObjectField(tuple.Item1.ToString(), unityObjectValue, typeof(UnityEngine.Object));
+					EditorGUILayout.ObjectField(label, mb.Instance, typeof(UnityEngine.MonoBehaviour), false);
+				}
+				else if (tuple.Item2 is ScriptableObjectInstanceBinding so)
+				{
+					EditorGUILayout.ObjectField(label, so.Instance, typeof(UnityEngine.ScriptableObject), false);
 				}
 				else
 				{
-					EditorGUILayout.LabelField(tuple.Item1.ToString(), tuple.Item2.GetType().Name);
+					EditorGUILayout.LabelField(GetLabelString(tuple.Item1), tuple.Item2.GetType().Name);
 				}
 			}
-			
+		}
+
+		private string GetLabelString(object o)
+		{
+			if (o is Type t)
+				return t.Name;
+			return o.ToString();
 		}
 	}
 }

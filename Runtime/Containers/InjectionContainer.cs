@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using WhiteSparrow.Common.Reflection;
 using WhiteSparrow.Shared.DependencyInjection.Context;
 
 namespace WhiteSparrow.Shared.DependencyInjection.Containers
@@ -10,7 +9,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 	{
 		internal static InjectionContainer Create(ContextIdentifier context)
 		{
-			GameObject gameObject = new GameObject(context.Name);
+			GameObject gameObject = new GameObject($"[Injection: {context.Name}]");
+			GameObject.DontDestroyOnLoad(gameObject);
 			InjectionContainer container = gameObject.AddComponent<InjectionContainer>();
 			container.Context = context;
 			return container;
@@ -83,9 +83,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		private IInternalInstanceBinding CreateBinding(Type type)
 		{
-			if (type.InheritsFrom(typeof(MonoBehaviour)))
+			if (typeof(MonoBehaviour).IsAssignableFrom(type))
 				return new MonoBehaviourInstanceBinding();
-			if (type.InheritsFrom<ScriptableObject>())
+			if (typeof(ScriptableObject).IsAssignableFrom(type))
 				return new ScriptableObjectInstanceBinding();
 			
 			return new GenericInstanceBinding();
