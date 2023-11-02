@@ -13,6 +13,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			GameObject.DontDestroyOnLoad(gameObject);
 			InjectionContainer container = gameObject.AddComponent<InjectionContainer>();
 			container.Context = context;
+			container.Map<InjectionContainer>(container);
 			return container;
 		}
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace WhiteSparrow.Shared.DependencyInjection.Context
 {
@@ -10,21 +11,21 @@ namespace WhiteSparrow.Shared.DependencyInjection.Context
 			this.Name = name;
 		}
 		
-		public static implicit operator ContextIdentifier(StructuralContext structuralContext)
-		{
-			return Get(structuralContext);
-		}
-
 		public static implicit operator ContextIdentifier(int intContext)
 		{
 			return Get(intContext);
+		}
+
+		public static implicit operator ContextIdentifier(Enum enumContext)
+		{
+			return Get(enumContext);
 		}
 
 		public static ContextIdentifier FromObject(object objectContext)
 		{
 			return Get(objectContext);
 		}
-
+	
 
 #region Static Registry
 

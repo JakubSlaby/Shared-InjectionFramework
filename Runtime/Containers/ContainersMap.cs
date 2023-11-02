@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using WhiteSparrow.Shared.DependencyInjection.Context;
 
@@ -30,9 +31,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			return null;
 		}
 
-		public InjectionContainer Get(StructuralContext structuralContext)
+		public InjectionContainer Get(Enum enumContext)
 		{
-			return Get((ContextIdentifier)structuralContext);
+			return Get((ContextIdentifier)enumContext);
 		}
 
 	}

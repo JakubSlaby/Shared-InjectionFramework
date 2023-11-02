@@ -7,11 +7,6 @@ namespace WhiteSparrow.Shared.DependencyInjection
 	public class InjectAttribute : Attribute
 	{
 		public readonly ContextIdentifier Context;
-		
-		public InjectAttribute(StructuralContext context)
-		{
-			Context = context;
-		}
 
 		public InjectAttribute(int context)
 		{
@@ -20,9 +15,9 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		
 		public InjectAttribute(object context)
 		{
-			if (context is StructuralContext structuralContext)
+			if(context is Enum enumValue)
 			{
-				Context = structuralContext;
+				Context = enumValue;
 			}
 			else if (context is IConvertible convertible)
 			{
