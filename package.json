@@ -21,5 +21,9 @@
     "injection",
     "unity"
   ],
+  "scripts": {
+    "prepublishOnly": "node package/prepublish.js",
+    "postpublish": "node package/postpublish.js"
+  },
   "license": "MIT"
 }
