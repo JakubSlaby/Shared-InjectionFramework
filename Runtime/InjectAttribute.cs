@@ -4,6 +4,7 @@ using WhiteSparrow.Shared.DependencyInjection.Context;
 namespace WhiteSparrow.Shared.DependencyInjection
 {
 	
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property)]
 	public class InjectAttribute : Attribute
 	{
 		public readonly ContextIdentifier Context;
@@ -12,7 +13,11 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		{
 			Context = context;
 		}
-		
+
+		public InjectAttribute(ContextIdentifier context)
+		{
+			Context = context;
+		}		
 		public InjectAttribute(object context)
 		{
 			if(context is Enum enumValue)

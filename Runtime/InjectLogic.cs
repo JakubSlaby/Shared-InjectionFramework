@@ -31,7 +31,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			var fields = mapping.Fields;
 			foreach (var fieldMappingRecord in fields)
 			{
-				InjectionContainer container = Injection.Containers.Get(fieldMappingRecord.Attribute.Context);
+				IInjectionContainer container = Injection.Context.Impl.Get(fieldMappingRecord.Attribute.Context);
 				object content = container.Get(fieldMappingRecord.FieldInfo.FieldType);
 				if (content != null)
 				{
@@ -46,7 +46,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			var properties = mapping.Properties;
 			foreach (var propertyMappingRecord in properties)
 			{
-				InjectionContainer container = Injection.Containers.Get(propertyMappingRecord.Attribute.Context);
+				IInjectionContainer container = Injection.Context.Impl.Get(propertyMappingRecord.Attribute.Context);
 				object content = container.Get(propertyMappingRecord.PropertyInfo.PropertyType);
 				if (content != null)
 				{
