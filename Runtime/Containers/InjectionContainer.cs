@@ -20,21 +20,22 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		void Clean();
 		void Destroy();
-		
 		string name { get; }
 	}
 	
 	public class InjectionContainer : MonoBehaviour, IInjectionContainer
 	{
-		internal static InjectionContainer Create(ContextIdentifier context)
+		internal static InjectionContainer Create(ContextMap contextMap, ContextIdentifier context)
 		{
 			GameObject gameObject = new GameObject($"[Injection: {context.Name}]");
 			GameObject.DontDestroyOnLoad(gameObject);
 			InjectionContainer container = gameObject.AddComponent<InjectionContainer>();
 			container.Context = context;
+			container.m_ContextMap = contextMap;
 			return container;
 		}
 
+		private ContextMap m_ContextMap;
 		public ContextIdentifier Context { get; private set; }
 
 
@@ -51,10 +52,12 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			get => m_instanceMap;
 		}
 
-		private bool m_Initialized;
+	
+		
+		private bool m_Created;
 		public IInjectionContainer Create()
 		{
-			m_Initialized = true;
+			m_Created = true;
 			this.Map<InjectionContainer>(this);
 			this.Map<IInjectionContainer>(this);
 			return this;
@@ -63,21 +66,21 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		public bool Has<T>()
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return false;
 			return m_instanceMap.ContainsKey(typeof(T));
 		}
 
 		public bool Has(object key)
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return false;
 			return m_instanceMap.ContainsKey(key);
 		}
 		
 		public T Map<T>()
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return default;
 			
 			Type type = typeof(T);
@@ -95,7 +98,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		public T Map<T>(T instance)
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 			{
 				Debug.LogError($"Not done {this.Context.Name}");
 				return default;
@@ -113,7 +116,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		public object Map(Type type, object instance)
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return default;
 			
 			if (Has(type))
@@ -139,27 +142,35 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		public T Get<T>()
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return default;
 			
 			if (m_instanceMap.TryGetValue(typeof(T), out var binding))
 				return (T)binding.Instance;
+
+			if (m_ContextMap.FallbackContainer != null && m_ContextMap.FallbackContainer != this)
+				return m_ContextMap.FallbackContainer.Get<T>();
+			
 			return default(T);
 		}
 
 		public object Get(object type)
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return default;
 			
 			if (m_instanceMap.TryGetValue(type, out var binding))
 				return binding.Instance;
+
+			if (m_ContextMap.FallbackContainer != null && m_ContextMap.FallbackContainer != this)
+				return m_ContextMap.FallbackContainer.Get(type);
+			
 			return null;
 		}
 		
 		public void Clean()
 		{
-			if (!m_Initialized)
+			if (!m_Created)
 				return;
 			
 			m_instanceMap.Clear();
@@ -172,11 +183,11 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			callback?.Invoke(this);
 		}
 
+
 		private void OnDestroy()
 		{
 			Clean();
 		}
-		
 	}
 
 	
