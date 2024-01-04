@@ -44,8 +44,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 #if UNITY_EDITOR
 		internal event Action<object, object> OnMappingAdded;
 		internal event Action<object, object> OnMappingRemoved;
-		internal event Action<InjectionContainer> OnContainerDestroy;
 #endif
+		internal event Action<InjectionContainer> OnContainerDestroy;
+
 
 		internal Dictionary<object, IInstanceBinding> Mapping
 		{
@@ -179,8 +180,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		public void Destroy()
 		{
 			var callback = OnContainerDestroy;
-			OnContainerDestroy = null;
 			callback?.Invoke(this);
+			OnContainerDestroy = null;
 		}
 
 
