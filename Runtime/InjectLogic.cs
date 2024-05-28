@@ -31,7 +31,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			var fields = mapping.Fields;
 			foreach (var fieldMappingRecord in fields)
 			{
-				InjectionContainer container = Injection.Containers.Get(fieldMappingRecord.Attribute.Context);
+				IInjectionContainer container = Injection.Context.Impl.Get(fieldMappingRecord.Attribute.Context);
 				object content = container.Get(fieldMappingRecord.FieldInfo.FieldType);
 				if (content != null)
 				{
@@ -46,7 +46,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			var properties = mapping.Properties;
 			foreach (var propertyMappingRecord in properties)
 			{
-				InjectionContainer container = Injection.Containers.Get(propertyMappingRecord.Attribute.Context);
+				IInjectionContainer container = Injection.Context.Impl.Get(propertyMappingRecord.Attribute.Context);
 				object content = container.Get(propertyMappingRecord.PropertyInfo.PropertyType);
 				if (content != null)
 				{
@@ -63,33 +63,36 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		private static List<PropertyMappingRecord> s_HelperPropertyInfoList = new List<PropertyMappingRecord>();
 		private static InjectionTypeMapping MapType(Type type)
 		{
-			FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
-												| BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy);
-			
-			foreach (var field in fields)
+			while (type != null)
 			{
-				if (Attribute.IsDefined(field, AttributeType))
-				{
-					s_HelperFieldInfoList.Add(new FieldMappingRecord()
-					{
-						FieldInfo = field,
-						Attribute = (InjectAttribute)Attribute.GetCustomAttribute(field, AttributeType)
-					});
-				}
-			}
-
-			PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
-															| BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy);
-			foreach (var property in properties)
-			{
-				if (Attribute.IsDefined(property, AttributeType))
-				{
-					s_HelperPropertyInfoList.Add(new PropertyMappingRecord()
-					{
-						PropertyInfo = property,
-						Attribute = (InjectAttribute)Attribute.GetCustomAttribute(property, AttributeType)
-					});
-				}
+				FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                			
+                foreach (var field in fields)
+                {
+                	if (Attribute.IsDefined(field, AttributeType))
+                	{
+                		s_HelperFieldInfoList.Add(new FieldMappingRecord()
+                		{
+                			FieldInfo = field,
+                			Attribute = (InjectAttribute)Attribute.GetCustomAttribute(field, AttributeType)
+                		});
+                	}
+                }
+    
+                PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                foreach (var property in properties)
+                {
+                	if (Attribute.IsDefined(property, AttributeType))
+                	{
+                		s_HelperPropertyInfoList.Add(new PropertyMappingRecord()
+                		{
+                			PropertyInfo = property,
+                			Attribute = (InjectAttribute)Attribute.GetCustomAttribute(property, AttributeType)
+                		});
+                	}
+                }
+				
+				type = type.BaseType;
 			}
 
 			var output = new InjectionTypeMapping()

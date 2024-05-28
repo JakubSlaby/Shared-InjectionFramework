@@ -41,17 +41,17 @@ namespace WhiteSparrow.Shared.DependencyInjection
 	public class InjectionMissingMappingException : Exception
 	{
 			
-		public InjectionMissingMappingException(InjectionContainer container, Type type) : this(container, type, null, null)
+		public InjectionMissingMappingException(IInjectionContainer container, Type type) : this(container, type, null, null)
 		{
 			
 		}
 		
-		public InjectionMissingMappingException(InjectionContainer container, Type type, string message) : base(BuildMessage(container, type, null, message))
+		public InjectionMissingMappingException(IInjectionContainer container, Type type, string message) : base(BuildMessage(container, type, null, message))
 		{
 			
 		}
 		
-		public InjectionMissingMappingException(InjectionContainer container, Type type, Type target, string message) : base(BuildMessage(container, type, target, message))
+		public InjectionMissingMappingException(IInjectionContainer container, Type type, Type target, string message) : base(BuildMessage(container, type, target, message))
 		{
 			
 		}
@@ -59,7 +59,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		
 		private static StringBuilder s_HelperStringBuilder = new StringBuilder();
 		
-		private static string BuildMessage(InjectionContainer container, Type type, Type target, string message)
+		private static string BuildMessage(IInjectionContainer container, Type type, Type target, string message)
 		{
 			if(s_HelperStringBuilder.Length > 0)
 				s_HelperStringBuilder.Clear();
