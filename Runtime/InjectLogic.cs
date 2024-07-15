@@ -14,7 +14,7 @@ namespace WhiteSparrow.Shared.DependencyInjection
 
 		public static void Inject(object instance)
 		{
-			if (instance == null || !Application.isPlaying)
+			if (instance == null)
 				return;
 
 			Type type = instance.GetType();
