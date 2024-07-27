@@ -25,8 +25,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		private void OnContainerDestroyed(InjectionContainer container)
 		{
+			container.OnContainerDestroy -= OnContainerDestroyed;
 			m_ContainersByContext.Remove(container.Context);
-			GameObject.Destroy(container.gameObject);
 		}
 
 		void IContextMap.Destroy(ContextIdentifier context)
@@ -49,6 +49,17 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			if(container is InjectionContainer containerT)
 				m_FallbackContainer = containerT;
 		}
+
+		void IContextMap.DestroyAll()
+		{
+			var array = new InjectionContainer[m_ContainersByContext.Count];
+			m_ContainersByContext.Values.CopyTo(array, 0);
+			m_ContainersByContext.Clear();
+			foreach (var container in array)
+			{
+				container.Destroy();
+			}
+		}
 	}
 
 	public interface IContextMap
@@ -59,5 +70,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		IInjectionContainer FallbackContainer { get; }
 		void SetFallbackContext(ContextIdentifier container);
 		void SetFallbackContext(IInjectionContainer container);
+
+		void DestroyAll();
 	}
 }

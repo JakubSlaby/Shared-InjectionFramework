@@ -8,6 +8,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 	public interface IInjectionContainer
 	{
 		IInjectionContainer Create();
+		bool IsCreated { get; }
+		
 		bool Has<T>();
 		bool Has(object key);
 
@@ -21,17 +23,18 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		void Clean();
 		void Destroy();
 		string name { get; }
+		
+		int Count { get; }
 	}
 	
-	public class InjectionContainer : MonoBehaviour, IInjectionContainer
+	public class InjectionContainer : ScriptableObject, IInjectionContainer
 	{
 		internal static InjectionContainer Create(ContextMap contextMap, ContextIdentifier context)
 		{
-			GameObject gameObject = new GameObject($"[Injection: {context.Name}]");
-			GameObject.DontDestroyOnLoad(gameObject);
-			InjectionContainer container = gameObject.AddComponent<InjectionContainer>();
+			InjectionContainer container = ScriptableObject.CreateInstance<InjectionContainer>();
 			container.Context = context;
 			container.m_ContextMap = contextMap;
+			container.name = $"InjectionContainer: {context.Name}";
 			return container;
 		}
 
@@ -63,6 +66,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			this.Map<IInjectionContainer>(this);
 			return this;
 		}
+
+		public bool IsCreated => m_Created;
 
 
 		public bool Has<T>()
@@ -179,17 +184,31 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		public void Destroy()
 		{
-			var callback = OnContainerDestroy;
-			callback?.Invoke(this);
-			OnContainerDestroy = null;
+			if(Application.isPlaying)
+				ScriptableObject.Destroy(this);
+			else
+				ScriptableObject.DestroyImmediate(this);
 		}
+
+		public int Count => m_instanceMap.Count;
 
 
 		private void OnDestroy()
 		{
 			Clean();
+#if UNITY_EDITOR
+			OnMappingAdded = null;
+			OnMappingRemoved = null;
+#endif
+			m_ContextMap = null;
+			m_instanceMap = null;
+			
+			var callback = OnContainerDestroy;
+			OnContainerDestroy = null;
+			callback?.Invoke(this);
 		}
 	}
+
 
 	
 	

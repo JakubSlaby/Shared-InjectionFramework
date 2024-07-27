@@ -116,3 +116,14 @@ You might be in a situation you'd want to destroy the instance of the context, e
 ```csharp
 Injection.Context.Global().Destroy();
 ```
+
+You can also destroy all contexts by calling
+```csharp
+Injection.Context.Impl.DestroyAll();
+```
+
+### Unit Testing
+You can use the Injection Framework in both Editor and Play mode unit tests.
+
+> [!WARNING]
+> The system automatically destroys all contexts when changing play mode state but you will have to handle cleanup between tests yourself.
