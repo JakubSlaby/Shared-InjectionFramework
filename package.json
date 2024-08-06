@@ -4,7 +4,7 @@
   "description": "Simple DI framework",
   "author": "Jakub Slaby <jakubslaby@gmail.com>",
   "tags": [],
-  "version": "1.0.1",
+  "version": "1.1.0",
   "dependencies": {},
   "repository": {
     "type": "git",

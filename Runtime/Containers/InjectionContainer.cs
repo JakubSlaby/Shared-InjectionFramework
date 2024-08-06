@@ -25,6 +25,11 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		string name { get; }
 		
 		int Count { get; }
+
+		IInjectionContainer Parent { get; }
+		void AddChild(IInjectionContainer child);
+		void RemoveChild(IInjectionContainer child);
+		IInjectionContainer[] Children { get; }
 	}
 	
 	public class InjectionContainer : ScriptableObject, IInjectionContainer
@@ -40,6 +45,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		private ContextMap m_ContextMap;
 		public ContextIdentifier Context { get; private set; }
+
+		private List<IInjectionContainer> m_Children;
+		private IInjectionContainer[] m_ChildrenCache;
 
 
 		private Dictionary<object, IInstanceBinding> m_instanceMap = new Dictionary<object, IInstanceBinding>();
@@ -145,7 +153,6 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			return new GenericInstanceBinding();
 		}
 
-
 		public T Get<T>()
 		{
 			if (!m_Created)
@@ -154,8 +161,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			if (m_instanceMap.TryGetValue(typeof(T), out var binding))
 				return (T)binding.Instance;
 
-			if (m_ContextMap.FallbackContainer != null && m_ContextMap.FallbackContainer != this)
-				return m_ContextMap.FallbackContainer.Get<T>();
+			if (Parent != null)
+				return Parent.Get<T>();
 			
 			return default(T);
 		}
@@ -168,9 +175,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			if (m_instanceMap.TryGetValue(type, out var binding))
 				return binding.Instance;
 
-			if (m_ContextMap.FallbackContainer != null && m_ContextMap.FallbackContainer != this)
-				return m_ContextMap.FallbackContainer.Get(type);
-			
+			if (Parent != null)
+				return Parent.Get(type);
+
 			return null;
 		}
 		
@@ -191,11 +198,83 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		}
 
 		public int Count => m_instanceMap.Count;
+		
+		
+		public IInjectionContainer Parent { get; private set; }
+		public void AddChild(IInjectionContainer child)
+		{
+			if (child is not InjectionContainer injectionContainer)
+				throw new Exception("Unhandled type of Injection Container introduced - not supporting parenting.");
+
+			if (injectionContainer.Parent == this)
+				return;
+			
+			if (injectionContainer.Parent != null)
+				throw new Exception($"Injection Context {child.name} already has a parent mapped");
+
+			injectionContainer.Parent = this;
+			m_Children ??= new List<IInjectionContainer>();
+			m_Children.Add(child);
+
+			m_ChildrenCache = null;
+		}
+
+		public void RemoveChild(IInjectionContainer child)
+		{
+			if (m_Destroyed)
+				return;
+			
+			if(m_Children == null)
+				return;
+			
+			if (child is not InjectionContainer injectionContainer)
+				throw new Exception("Unhandled type of Injection Container introduced - not supporting parenting.");
+
+			if (injectionContainer.Parent == this)
+				injectionContainer.Parent = null;
+			m_Children.Remove(child);
+			
+			m_ChildrenCache = null;
+		}
+
+		public IInjectionContainer[] Children
+		{
+			get
+			{
+				if (m_Children == null || m_Children.Count == 0)
+					return Array.Empty<IInjectionContainer>();
+				if (m_ChildrenCache == null)
+					m_ChildrenCache = m_Children.ToArray();
+				return m_ChildrenCache;
+			}
+		}
 
 
+		private bool m_Destroyed;
 		private void OnDestroy()
 		{
+			if (m_Destroyed)
+				return;
+			m_Destroyed = true;
+			
 			Clean();
+
+			if (m_Children != null)
+			{
+				foreach (var child in m_Children)
+				{
+					child.Destroy();
+				}
+			}
+			m_Children = null;
+			m_ChildrenCache = null;
+
+			if (Parent != null)
+			{
+				Parent.RemoveChild(this);
+				Parent = null;
+			}
+			
 #if UNITY_EDITOR
 			OnMappingAdded = null;
 			OnMappingRemoved = null;

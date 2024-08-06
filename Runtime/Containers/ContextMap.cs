@@ -7,8 +7,6 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 	public class ContextMap : IContextMap
 	{
 		private Dictionary<ContextIdentifier, InjectionContainer> m_ContainersByContext  = new Dictionary<ContextIdentifier, InjectionContainer>();
-		private InjectionContainer m_FallbackContainer;
-		public IInjectionContainer FallbackContainer => m_FallbackContainer;
 		
 		public IContextMap Impl => this;
 		
@@ -38,18 +36,6 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 			container.Destroy();
 		}
 
-		void IContextMap.SetFallbackContext(ContextIdentifier identifier)
-		{
-			if (this.Impl.Get(identifier) is InjectionContainer container)
-				m_FallbackContainer = container;
-		}
-
-		void IContextMap.SetFallbackContext(IInjectionContainer container)
-		{
-			if(container is InjectionContainer containerT)
-				m_FallbackContainer = containerT;
-		}
-
 		void IContextMap.DestroyAll()
 		{
 			var array = new InjectionContainer[m_ContainersByContext.Count];
@@ -66,10 +52,6 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 	{
 		IInjectionContainer Get(ContextIdentifier context);
 		void Destroy(ContextIdentifier context);
-
-		IInjectionContainer FallbackContainer { get; }
-		void SetFallbackContext(ContextIdentifier container);
-		void SetFallbackContext(IInjectionContainer container);
 
 		void DestroyAll();
 	}
