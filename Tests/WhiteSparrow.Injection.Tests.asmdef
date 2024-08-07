@@ -1,5 +1,5 @@
 {
-    "name": "Tests",
+    "name": "WhiteSparrow.Injection.Tests",
     "rootNamespace": "",
     "references": [
         "GUID:b65626aace114e98adccd18a69e7ce6f",
