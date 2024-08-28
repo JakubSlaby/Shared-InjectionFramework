@@ -30,6 +30,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		void AddChild(IInjectionContainer child);
 		void RemoveChild(IInjectionContainer child);
 		IInjectionContainer[] Children { get; }
+
+		void InjectInto(object instance);
 	}
 	
 	public class InjectionContainer : ScriptableObject, IInjectionContainer
@@ -247,6 +249,11 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 					m_ChildrenCache = m_Children.ToArray();
 				return m_ChildrenCache;
 			}
+		}
+
+		public void InjectInto(object instance)
+		{
+			InjectLogic.Inject(instance, this);
 		}
 
 

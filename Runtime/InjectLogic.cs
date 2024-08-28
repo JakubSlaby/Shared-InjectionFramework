@@ -11,11 +11,13 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		private static readonly Type AttributeType = typeof(InjectAttribute);
 		private static Dictionary<Type, InjectionTypeMapping> s_InjectionTypeMapping = new Dictionary<Type, InjectionTypeMapping>();
 
-		public static void Inject(object instance)
+		public static void Inject(object instance) => Inject(instance, null);
+
+		public static void Inject(object instance, IInjectionContainer container)
 		{
 			if (instance == null)
 				return;
-
+			
 			Type type = instance.GetType();
 
 			if (!s_InjectionTypeMapping.TryGetValue(type, out var mapping))
@@ -26,34 +28,46 @@ namespace WhiteSparrow.Shared.DependencyInjection
 
 			if (!mapping.HasInjectionTargets)
 				return;
-
+			
 			var fields = mapping.Fields;
 			foreach (var fieldMappingRecord in fields)
 			{
-				IInjectionContainer container = Injection.Context.Impl.Get(fieldMappingRecord.Attribute.Context);
-				object content = container.Get(fieldMappingRecord.FieldInfo.FieldType);
+				IInjectionContainer c = container;
+				if(fieldMappingRecord.Attribute.Context != null)
+					c = Injection.Context.Impl.Get(fieldMappingRecord.Attribute.Context);
+
+				if (c == null)
+					throw new InjectionNoContextException(fieldMappingRecord.FieldInfo, fieldMappingRecord.Attribute);
+				
+				object content = c.Get(fieldMappingRecord.FieldInfo.FieldType);
 				if (content != null)
 				{
 					fieldMappingRecord.FieldInfo.SetValue(instance, content);
 				}
 				else
 				{
-					throw new InjectionMissingMappingException(container, fieldMappingRecord.FieldInfo.FieldType, type, "Unable to Inject mapping.");
+					throw new InjectionMissingMappingException(c, fieldMappingRecord.FieldInfo.FieldType, type, "Unable to Inject mapping.");
 				}
 			}
 
 			var properties = mapping.Properties;
 			foreach (var propertyMappingRecord in properties)
 			{
-				IInjectionContainer container = Injection.Context.Impl.Get(propertyMappingRecord.Attribute.Context);
-				object content = container.Get(propertyMappingRecord.PropertyInfo.PropertyType);
+				IInjectionContainer c = container;
+				if(propertyMappingRecord.Attribute.Context != null)
+					c = Injection.Context.Impl.Get(propertyMappingRecord.Attribute.Context);
+				
+				if (c == null)
+					throw new InjectionNoContextException(propertyMappingRecord.PropertyInfo, propertyMappingRecord.Attribute);
+				
+				object content = c.Get(propertyMappingRecord.PropertyInfo.PropertyType);
 				if (content != null)
 				{
 					propertyMappingRecord.PropertyInfo.SetValue(instance, content);
 				}
 				else
 				{
-					throw new InjectionMissingMappingException(container, propertyMappingRecord.PropertyInfo.PropertyType, type, "Unable to Inject mapping.");
+					throw new InjectionMissingMappingException(c, propertyMappingRecord.PropertyInfo.PropertyType, type, "Unable to Inject mapping.");
 				}
 			}
 		}

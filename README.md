@@ -96,8 +96,43 @@ namespace Scripts_World
     }
 }
 ```
-
 After calling `this.Inject()` the Fields and Properties marked with `[InjectGlobal]` attribute will be populated with instances mapped to their respective types.
+
+### Injecting from a specific container
+```csharp
+
+namespace Scripts_World
+{
+    public class GameLogic
+    {
+        [Inject]
+        private NetworkManager m_NetworkManager;
+
+        [Inject]
+        private WorldDatabase m_WorldDatabase;
+
+        [Inject]
+        private ICharacterSettings m_CharacterSettings;
+    }
+    
+    public class Factory
+    {
+        public GameLogic Make()
+        {
+            GameLogic gl = new GameLogic();
+            // option 1
+            Injection.Context.Global().InjectInto(gl);
+            // option 2
+            gl.Inject(map => map.GLobal());
+            return gl;
+        }
+    }
+}
+```
+There are two options to inject from a specific container (and it's parents)
+
+Option 1: If you have the Container reference you can just call `IInjectionContainer.InjectInto(target)` providing your target.
+Option 2: Use the extension method overload which provides you the ContextMap from which you can fetch the desired target context.
 
 #### Direct access
 To access a mapping directly you can fetch it from the context `IInjectionContainer`.

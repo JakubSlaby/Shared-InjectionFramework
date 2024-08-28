@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using WhiteSparrow.Shared.DependencyInjection.Containers;
 
@@ -35,6 +37,25 @@ namespace WhiteSparrow.Shared.DependencyInjection
 			string output = s_HelperStringBuilder.ToString();
 			s_HelperStringBuilder.Clear();
 			return output;
+		}
+	}
+
+	public class InjectionNoContextException : Exception
+	{
+		public InjectionNoContextException(FieldInfo fieldInfo, Attribute attribute) : base(BuildMessage(fieldInfo, attribute))
+		{
+		}
+		public InjectionNoContextException(PropertyInfo propertyInfo, Attribute attribute) : base(BuildMessage(propertyInfo, attribute))
+		{
+		}
+
+		private static string BuildMessage(FieldInfo fieldInfo, Attribute attribute)
+		{
+			return $"Injection couldn't resolve a correct container for Field {fieldInfo.DeclaringType.Name}.{fieldInfo.Name}, if you're using imprecise [Inject] attribute make sure you're injecting from a specific container, example: Injection.Context.Global().Inject(target); instead of the extension method.";
+		}
+		private static string BuildMessage(PropertyInfo propertyInfo, Attribute attribute)
+		{
+			return $"Injection couldn't resolve a correct container for Property {propertyInfo.DeclaringType.Name}.{propertyInfo.Name}, if you're using imprecise [Inject] attribute make sure you're injecting from a specific container, example: Injection.Context.Global().Inject(target); instead of the extension method.";
 		}
 	}
 

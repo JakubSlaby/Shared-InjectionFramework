@@ -9,6 +9,10 @@ namespace WhiteSparrow.Shared.DependencyInjection
 	{
 		public readonly ContextIdentifier Context;
 
+		public InjectAttribute()
+		{
+		}
+		
 		public InjectAttribute(int context)
 		{
 			Context = context;
