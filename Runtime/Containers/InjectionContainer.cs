@@ -22,6 +22,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 
 		void Clean();
 		void Destroy();
+		event Action<InjectionContainer> OnContainerDestroy;
 		string name { get; }
 		
 		int Count { get; }
@@ -58,7 +59,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Containers
 		internal event Action<object, object> OnMappingAdded;
 		internal event Action<object, object> OnMappingRemoved;
 #endif
-		internal event Action<InjectionContainer> OnContainerDestroy;
+		public event Action<InjectionContainer> OnContainerDestroy;
 
 
 		internal Dictionary<object, IInstanceBinding> Mapping

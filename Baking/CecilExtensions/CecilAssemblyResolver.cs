@@ -1,0 +1,43 @@
+﻿using System.Collections.Generic;
+using System.IO;
+using Mono.Cecil;
+using UnityEngine;
+
+namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
+{
+	public class CecilAssemblyResolver : IAssemblyResolver
+	{
+		private Dictionary<string, AssemblyDefinition> m_AssemblyMapping = new Dictionary<string, AssemblyDefinition>();
+
+		
+		public AssemblyDefinition Resolve(AssemblyNameReference name) => Resolve(name, null);
+
+		public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
+		{
+			if (m_AssemblyMapping.TryGetValue(name.FullName, out var existing))
+				return existing;
+
+			var path = GetAssemblyPath(name.Name);
+			var assembly = AssemblyDefinition.ReadAssembly(path);
+			m_AssemblyMapping[name.FullName] = assembly;
+			return assembly;
+		}
+		
+		public void Dispose()
+		{
+			foreach (var assembly in m_AssemblyMapping.Values)
+			{
+				assembly.Dispose();
+			}
+			m_AssemblyMapping.Clear();
+		}
+
+		internal static string GetAssemblyPath(string assemblyName)
+		{
+			return Path.GetFullPath(Path.Combine(GetLibraryAssembliesPath(), $"{assemblyName}.dll"));
+		}
+
+		private static string GetLibraryAssembliesPath() => Path.GetFullPath(Path.Combine(Application.dataPath, "../Library/ScriptAssemblies"));
+
+	}
+}
