@@ -39,6 +39,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 		
 		public static bool IsTypeOrSubtype(TypeReference type, TypeReference targetType)
 		{
+			if (!CecilAssemblyUtil.CanProcessSourceAssembly(type.Scope.Name))
+				return false;
+			
 			try
 			{
 				var def = type.Resolve();
@@ -46,6 +49,9 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 				{
 					if (def.FullName == targetType.FullName)
 						return true;
+					
+					if (def.BaseType != null && !CecilAssemblyUtil.CanProcessSourceAssembly(def.BaseType.Scope.Name))
+						return false;
 					def = def.BaseType?.Resolve();
 				}
 

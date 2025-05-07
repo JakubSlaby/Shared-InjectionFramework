@@ -44,6 +44,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 			{
 				if(parameters[i] is string str)
 					instructions[i] = processor.Create(OpCodes.Ldstr, str);
+				if(parameters[i] is FieldDefinition fldf)
+					instructions[i] = processor.Create(OpCodes.Ldsfld, fldf);
 			}
 			
 			instructions[parameters.Length] = processor.Create(OpCodes.Call, methodReference);

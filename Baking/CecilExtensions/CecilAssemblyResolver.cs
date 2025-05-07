@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Mono.Cecil;
+using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
@@ -18,6 +20,23 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 				return existing;
 
 			var path = GetAssemblyPath(name.Name);
+			if (!File.Exists(path))
+			{
+				string[] assets = AssetDatabase.FindAssets(name.Name);
+				foreach (var asset in assets)
+				{
+					path = AssetDatabase.GUIDToAssetPath(asset);
+					if(path.EndsWith(".dll"))
+						break;
+				}
+				
+				FileInfo f = new FileInfo(path);
+				if(!f.Exists || f.Extension != ".dll")
+				{
+					Debug.Log($"Assembly {name.FullName} not found");
+				}
+			}
+			
 			var assembly = AssemblyDefinition.ReadAssembly(path);
 			m_AssemblyMapping[name.FullName] = assembly;
 			return assembly;

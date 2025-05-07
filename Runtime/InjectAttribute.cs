@@ -13,16 +13,20 @@ namespace WhiteSparrow.Shared.DependencyInjection
 		{
 		}
 		
-		public InjectAttribute(int context)
+		protected InjectAttribute(int context)
 		{
 			Context = context;
 		}
 
-		public InjectAttribute(ContextIdentifier context)
+		protected InjectAttribute(string context)
 		{
 			Context = context;
-		}		
-		public InjectAttribute(object context)
+		}
+		protected InjectAttribute(ContextIdentifier context)
+		{
+			Context = context;
+		}
+		protected InjectAttribute(object context)
 		{
 			if(context is Enum enumValue)
 			{

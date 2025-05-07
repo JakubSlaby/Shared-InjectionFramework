@@ -6,6 +6,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using UnityEngine;
 using WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions;
+using WhiteSparrow.Shared.DependencyInjection.Context;
 
 namespace WhiteSparrow.Shared.DependencyInjection.Baking
 {
@@ -15,10 +16,14 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 		private ReaderParameters Reader;
 		private CecilAssemblyResolver m_AssemblyResolver;
 
+		private Type m_TypeInjectAttribute;
+
 		public void Initialize()
 		{
 			m_AssemblyResolver = new CecilAssemblyResolver();
 			Reader  = new Mono.Cecil.ReaderParameters { InMemory = true, AssemblyResolver = m_AssemblyResolver};
+			
+			m_TypeInjectAttribute = typeof(InjectAttribute);
 		}
 
 		public void Process(string assemblyPath, string outputPath)
@@ -60,14 +65,17 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 			
 			// Create (or replace) the _Inject method stub
 			var method = type.Extensions().CreateMethod("_Inject", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual);
-
+			
 
 			foreach (var member in type.Fields)
 			{
-				if (!member.Extensions().HasAttribute<InjectAttribute>(true, out var attribute))
+				if (!member.Extensions().HasAttribute<InjectAttribute>(true, out var attr))
 					continue;
 				
-				method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ "Injecting field: " + member.Name });	
+				FieldDefinition resolvedContextField = ExtractInjectionContext(attr);
+				
+				if(resolvedContextField != null)
+					method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ resolvedContextField });	
 			}
 			foreach (var member in type.Properties)
 			{
@@ -79,7 +87,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 					continue;
 				}
 				
-				method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ "Injecting property: " + member.Name });	
+				method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ "Injecting property: " + member.Name + " context: " + attribute.Fields });	
 			}
 			
 
@@ -89,8 +97,49 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 			
 			Debug.Log("Adding method: " + method.Name + " to type: " + type.Name);
 		}
+
 		
-	
+		private FieldDefinition ExtractInjectionContext(CustomAttribute customAttribute)
+		{
+			var type = customAttribute.AttributeType.Resolve();
+			if (type.FullName == m_TypeInjectAttribute.FullName)
+				return null;
+
+			var baseType = type.BaseType.Resolve();
+			if (baseType.FullName != m_TypeInjectAttribute.FullName)
+				return null;
+			
+			MethodDefinition def = customAttribute.Constructor.Resolve();
+			var instructions = def.Body.Instructions;
+
+			if (instructions[0].OpCode.Code != Code.Ldarg_0)
+				return null;
+			
+			int n = 0;
+			for (n = 1; n < instructions.Count; n++)
+			{
+				var instruction = instructions[n];
+				if (instruction.OpCode.Code != Code.Call)
+					continue;
+
+				if (instruction.Operand is MethodReference methodReference == false)
+					return null;
+
+				var methodDefinition = methodReference.Resolve();
+
+				if (methodDefinition.DeclaringType.FullName != m_TypeInjectAttribute.FullName)
+					return null;
+				if (methodDefinition.Name != ".ctor")
+					return null;
+
+				break;
+			}
+
+			if (instructions[n - 1].Operand is FieldDefinition fieldDefinition)
+				return fieldDefinition;
+			
+			return null;
+		}
 
 	}
 }

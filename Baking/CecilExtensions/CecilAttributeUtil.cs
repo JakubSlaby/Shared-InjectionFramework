@@ -22,6 +22,8 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 			
 			foreach (var attr in wrapper.Token.CustomAttributes)
 			{
+				if (!CecilAssemblyUtil.CanProcessSourceAssembly(attr.AttributeType.Scope.Name))
+					continue;
 				if (!includeSubclasses)
 				{
 					if (attr.AttributeType.FullName == attrType.FullName)
