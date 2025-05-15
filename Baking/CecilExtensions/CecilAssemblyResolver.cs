@@ -11,11 +11,33 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 	{
 		private Dictionary<string, AssemblyDefinition> m_AssemblyMapping = new Dictionary<string, AssemblyDefinition>();
 
+		public static AssemblyDefinition Load(string assemblyPath)
+		{
+			CecilAssemblyResolver resolver = new CecilAssemblyResolver();
+			var assembly = AssemblyDefinition.ReadAssembly(assemblyPath, resolver.Reader );
+			
+			var a = resolver.Resolve(assembly.Name);
+			if(a != assembly)
+				assembly.Dispose();
+			return a;
+
+			return null;
+		}
+
+		public ReaderParameters Reader { get; private set; }
+		public WriterParameters Writer { get; private set; }
+		public CecilAssemblyResolver()
+		{
+			
+			Reader  = new Mono.Cecil.ReaderParameters { InMemory = true, AssemblyResolver = this, ReadSymbols = false};
+			Writer = new WriterParameters() { WriteSymbols = false};
+		}
 		
-		public AssemblyDefinition Resolve(AssemblyNameReference name) => Resolve(name, null);
+		public AssemblyDefinition Resolve(AssemblyNameReference name) => Resolve(name, Reader);
 
 		public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
 		{
+			
 			if (m_AssemblyMapping.TryGetValue(name.FullName, out var existing))
 				return existing;
 
@@ -37,7 +59,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 				}
 			}
 			
-			var assembly = AssemblyDefinition.ReadAssembly(path);
+			var assembly = AssemblyDefinition.ReadAssembly(path, parameters);
 			m_AssemblyMapping[name.FullName] = assembly;
 			return assembly;
 		}

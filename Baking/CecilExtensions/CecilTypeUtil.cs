@@ -12,6 +12,22 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions
 			return new CecilWrapper<TypeDefinition>(type);
 		}
 
+		public static Type ResolveType(this CecilWrapper<TypeDefinition> type)
+		{
+			var module = type.Token.Module;
+			var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.FullName == module.Assembly.FullName);
+			if (assembly == null)
+			{
+				Debug.LogError($"Unable to resolve assembly {module.Assembly.FullName}");
+				return null;
+			}
+
+			var systemType = assembly.GetType(type.Token.FullName);
+			if(systemType == null)
+				Debug.LogError($"Unable to resolve type {type.Token.FullName}");
+			return systemType;
+		}
+
 		public static CecilWrapper<TypeDefinition> AddInterface<T>(this CecilWrapper<TypeDefinition> typeWrapper)
 		{
 			return AddInterface(typeWrapper, typeof(T));

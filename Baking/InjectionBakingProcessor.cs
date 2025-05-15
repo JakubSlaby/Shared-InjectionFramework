@@ -6,6 +6,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using UnityEngine;
 using WhiteSparrow.Shared.DependencyInjection.Baking.CecilExtensions;
+using WhiteSparrow.Shared.DependencyInjection.Containers;
 using WhiteSparrow.Shared.DependencyInjection.Context;
 
 namespace WhiteSparrow.Shared.DependencyInjection.Baking
@@ -13,7 +14,6 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 	public class InjectionBakingProcessor
 	{
 
-		private ReaderParameters Reader;
 		private CecilAssemblyResolver m_AssemblyResolver;
 
 		private Type m_TypeInjectAttribute;
@@ -21,14 +21,13 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 		public void Initialize()
 		{
 			m_AssemblyResolver = new CecilAssemblyResolver();
-			Reader  = new Mono.Cecil.ReaderParameters { InMemory = true, AssemblyResolver = m_AssemblyResolver};
 			
 			m_TypeInjectAttribute = typeof(InjectAttribute);
 		}
 
 		public void Process(string assemblyPath, string outputPath)
 		{
-			var assembly = AssemblyDefinition.ReadAssembly(assemblyPath, Reader );
+			var assembly = CecilAssemblyResolver.Load(assemblyPath );
 
 			if(!CecilAssemblyUtil.CanProcessAssembly(assembly.Name.Name))
 				return;
@@ -53,7 +52,7 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 			{
 				// if(!Directory.Exists(outputPath))
 				// 	Directory.CreateDirectory(outputPath);
-				module.Write(outputPath);
+				module.Write(outputPath, m_AssemblyResolver.Writer);
 			}
 			module.Dispose();
 		}
@@ -72,14 +71,14 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 				if (!member.Extensions().HasAttribute<InjectAttribute>(true, out var attr))
 					continue;
 				
-				FieldDefinition resolvedContextField = ExtractInjectionContext(attr);
+				MemberReference resolvedContextField = ExtractInjectionContext(attr);
 				
 				if(resolvedContextField != null)
-					method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ resolvedContextField });	
+					method.Extensions().CallMethod(typeof(Debug).FindMethod(nameof(Debug.Log)).AsStatic().WithArguments(typeof(string)), resolvedContextField);
 			}
 			foreach (var member in type.Properties)
 			{
-				if (!member.Extensions().HasAttribute<InjectAttribute>(true, out var attribute))
+				if (!member.Extensions().HasAttribute<InjectAttribute>(true, out var attr))
 					continue;
 				if (member.SetMethod == null)
 				{
@@ -87,19 +86,33 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 					continue;
 				}
 				
-				method.Extensions().CallStatic(typeof(Debug), nameof(Debug.Log), new object[]{ "Injecting property: " + member.Name + " context: " + attribute.Fields });	
+				MemberReference resolvedContextField = ExtractInjectionContext(attr);
+				TypeDefinition memberType = member.PropertyType.Resolve();
+				
+
+				if(resolvedContextField != null)
+					method.Extensions().CallMethod(typeof(Debug).FindMethod(nameof(Debug.Log)).AsStatic().WithArguments(typeof(string)), resolvedContextField);
+
+				method.Extensions()
+					.This()
+					.CallPropertyGet(typeof(Injection).FindProperty(nameof(Injection.Context)).AsStatic())
+					.CallPropertyGet(typeof(ContextMap).FindProperty(nameof(ContextMap.Impl)))
+					.CallMethod(typeof(IContextMap).FindMethod(nameof(IContextMap.Get)).WithArguments(typeof(ContextIdentifier)), resolvedContextField)
+					.CallMethod(typeof(IInjectionContainer).FindMethod(nameof(IInjectionContainer.Get)).WithGenericArguments(memberType.Extensions().ResolveType()))
+					.CallPropertySet(member)
+					.Nop()
+					;
 			}
 			
-
 			method.Extensions().Return();
+
 			
 			
-			
-			Debug.Log("Adding method: " + method.Name + " to type: " + type.Name);
+			Debug.Log("Adding method: " + method.Name + " to type: " + type.Name + "\n" + method.Extensions().InstructionsToString());
 		}
 
 		
-		private FieldDefinition ExtractInjectionContext(CustomAttribute customAttribute)
+		private MemberReference ExtractInjectionContext(CustomAttribute customAttribute)
 		{
 			var type = customAttribute.AttributeType.Resolve();
 			if (type.FullName == m_TypeInjectAttribute.FullName)
@@ -128,14 +141,14 @@ namespace WhiteSparrow.Shared.DependencyInjection.Baking
 				var methodDefinition = methodReference.Resolve();
 
 				if (methodDefinition.DeclaringType.FullName != m_TypeInjectAttribute.FullName)
-					return null;
+					continue;
 				if (methodDefinition.Name != ".ctor")
 					return null;
 
 				break;
 			}
 
-			if (instructions[n - 1].Operand is FieldDefinition fieldDefinition)
+			if (instructions[n - 1].Operand is MemberReference fieldDefinition)
 				return fieldDefinition;
 			
 			return null;
